@@ -4,8 +4,10 @@ import com.viajajunto.api.core.security.TripSecurityService;
 import com.viajajunto.api.modules.activity.entity.AtividadeViagem;
 import com.viajajunto.api.modules.activity.repository.AtividadeViagemRepository;
 import com.viajajunto.api.modules.budget.dto.OrcamentoResponseDTO;
+import com.viajajunto.api.modules.budget.dto.UpdateOrcamentoDTO;
 import com.viajajunto.api.modules.budget.entity.Orcamento;
 import com.viajajunto.api.modules.budget.repository.OrcamentoRepository;
+import com.viajajunto.api.modules.trip.entity.Viagem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -78,5 +80,38 @@ class OrcamentoServiceTest {
         assertEquals(2, resumo.getGastosPorCategoria().size());
 
         verify(tripSecurityService, times(1)).validateUserCanViewTrip(10L, 1L);
+    }
+
+    @Test
+    @DisplayName("Deve calcular resumo quando orçamento não for encontrado e não houver atividades")
+    void shouldCalculateBudgetWhenEmpty() {
+        when(orcamentoRepository.findByViagemId(10L)).thenReturn(Optional.empty());
+        when(atividadeViagemRepository.findAllByViagemId(10L)).thenReturn(List.of());
+
+        OrcamentoResponseDTO resumo = orcamentoService.getResumoOrcamento(10L, 1L);
+
+        assertNotNull(resumo);
+        assertEquals(BigDecimal.ZERO, resumo.getOrcamentoTotal());
+        assertEquals(BigDecimal.ZERO, resumo.getTotalPlanejado());
+        assertEquals(BigDecimal.ZERO, resumo.getSaldoDisponivel());
+        assertEquals(0.0, resumo.getPercentualConsumidoTotal());
+        assertTrue(resumo.getGastosPorCategoria().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Deve atualizar o orçamento total com sucesso")
+    void shouldUpdateOrcamentoTotalSuccessfully() {
+        Viagem viagem = Viagem.builder().id(10L).build();
+        UpdateOrcamentoDTO dto = UpdateOrcamentoDTO.builder().orcamentoTotal(BigDecimal.valueOf(2500.00)).build();
+
+        when(tripSecurityService.validateUserCanEditTrip(10L, 1L)).thenReturn(viagem);
+        when(orcamentoRepository.findByViagemId(10L)).thenReturn(Optional.of(sampleOrcamento));
+        when(atividadeViagemRepository.findAllByViagemId(10L)).thenReturn(sampleAtividades);
+
+        OrcamentoResponseDTO response = orcamentoService.updateOrcamentoTotal(10L, dto, 1L);
+
+        assertNotNull(response);
+        assertEquals(BigDecimal.valueOf(2500.00), sampleOrcamento.getOrcamentoTotal());
+        verify(orcamentoRepository, times(1)).save(sampleOrcamento);
     }
 }

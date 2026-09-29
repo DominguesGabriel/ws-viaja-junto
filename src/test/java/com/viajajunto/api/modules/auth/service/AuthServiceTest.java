@@ -1,11 +1,14 @@
 package com.viajajunto.api.modules.auth.service;
 
 import com.viajajunto.api.core.exception.BusinessRuleException;
+import com.viajajunto.api.core.exception.ResourceNotFoundException;
 import com.viajajunto.api.core.security.JwtService;
 import com.viajajunto.api.core.security.UserPrincipal;
 import com.viajajunto.api.modules.auth.dto.AuthResponseDTO;
+import com.viajajunto.api.modules.auth.dto.ForgotPasswordDTO;
 import com.viajajunto.api.modules.auth.dto.LoginRequestDTO;
 import com.viajajunto.api.modules.auth.dto.RegisterDTO;
+import com.viajajunto.api.modules.auth.dto.UserDTO;
 import com.viajajunto.api.modules.auth.entity.User;
 import com.viajajunto.api.modules.auth.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +23,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,6 +57,8 @@ class AuthServiceTest {
                 .nome("Gabriel Domingues")
                 .email("gabriel@example.com")
                 .senha("encoded_pwd")
+                .avatarUrl("https://avatar.url")
+                .dataCriacao(LocalDateTime.now())
                 .build();
     }
 
@@ -114,5 +120,51 @@ class AuthServiceTest {
         assertNotNull(response);
         assertEquals("mocked_jwt_token", response.getToken());
         assertEquals("Gabriel Domingues", response.getNome());
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException quando usuário não for encontrado pós autenticação")
+    void shouldThrowNotFoundOnLoginWhenUserNotInDb() {
+        LoginRequestDTO dto = LoginRequestDTO.builder()
+                .email("gabriel@example.com")
+                .senha("password123")
+                .build();
+
+        Authentication authMock = mock(Authentication.class);
+        when(authMock.getPrincipal()).thenReturn(new UserPrincipal(sampleUser));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authMock);
+        when(userRepository.findByEmail("gabriel@example.com")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> authService.login(dto));
+    }
+
+    @Test
+    @DisplayName("Deve retornar perfil do usuário por e-mail com sucesso")
+    void shouldGetProfileSuccessfully() {
+        when(userRepository.findByEmail("gabriel@example.com")).thenReturn(Optional.of(sampleUser));
+
+        UserDTO profile = authService.getProfile("gabriel@example.com");
+
+        assertNotNull(profile);
+        assertEquals(1L, profile.getId());
+        assertEquals("Gabriel Domingues", profile.getNome());
+        assertEquals("gabriel@example.com", profile.getEmail());
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao buscar perfil de e-mail inexistente")
+    void shouldThrowNotFoundWhenProfileEmailDoesNotExist() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> authService.getProfile("unknown@example.com"));
+    }
+
+    @Test
+    @DisplayName("Deve executar forgotPassword sem lançar erros")
+    void shouldExecuteForgotPassword() {
+        ForgotPasswordDTO dto = ForgotPasswordDTO.builder().email("gabriel@example.com").build();
+        when(userRepository.findByEmail("gabriel@example.com")).thenReturn(Optional.of(sampleUser));
+
+        assertDoesNotThrow(() -> authService.forgotPassword(dto));
     }
 }
