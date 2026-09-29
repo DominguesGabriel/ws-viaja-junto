@@ -96,6 +96,7 @@
 					</excludes>
 				</configuration>
 			</plugin>
+<<<<<<< .merge_file_6WsLvs
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
@@ -135,6 +136,19 @@
 					</execution>
 					<execution>
 						<id>check</id>
+=======
+-googl			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.6.0</version>
+				<configuration>
+					<configLocation>google_checks.xml</configLocation>
+					<failOnViolation>true</failOnViolation>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>validate</phase>
+>>>>>>> .merge_file_cYzODc
 						<goals>
 							<goal>check</goal>
 						</goals>
