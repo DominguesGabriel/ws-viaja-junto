@@ -1,0 +1,490 @@
+openapi: 3.0.3
+info:
+  title: ViajaJunto REST API
+  description: API para planejamento colaborativo de viagens, orçamentos, catálogo de destinos e atividades.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+    description: Servidor Local de Desenvolvimento
+paths:
+  /auth/register:
+    post:
+      summary: Registro de novo usuário
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDTO'
+      responses:
+        '201':
+          description: Usuário cadastrado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseDTO'
+        '400':
+          description: Erro de validação ou e-mail já existente
+
+  /auth/login:
+    post:
+      summary: Autenticação de usuário
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestDTO'
+      responses:
+        '200':
+          description: Login efetuado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseDTO'
+        '401':
+          description: Credenciais inválidas
+
+  /auth/me:
+    get:
+      summary: Obter perfil do usuário autenticado
+      operationId: getProfile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Perfil do usuário retornado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '403':
+          description: Não autorizado
+
+  /auth/forgot-password:
+    post:
+      summary: Solicitar recuperação de senha
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordDTO'
+      responses:
+        '204':
+          description: Instruções de recuperação enviadas
+
+  /viagens:
+    get:
+      summary: Listar viagens do usuário
+      operationId: listUserTrips
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de viagens retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ViagemResponseDTO'
+    post:
+      summary: Criar nova viagem
+      operationId: createViagem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateViagemDTO'
+      responses:
+        '201':
+          description: Viagem criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViagemResponseDTO'
+
+  /viagens/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: Buscar viagem por ID
+      operationId: getViagemById
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Detalhes da viagem retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViagemResponseDTO'
+        '404':
+          description: Viagem não encontrada
+    put:
+      summary: Atualizar viagem existente
+      operationId: updateViagem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateViagemDTO'
+      responses:
+        '200':
+          description: Viagem atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViagemResponseDTO'
+    delete:
+      summary: Excluir viagem
+      operationId: deleteViagem
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Viagem excluída com sucesso
+
+  /viagens/{viagemId}/membros/join:
+    parameters:
+      - name: viagemId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    post:
+      summary: Entrar na viagem via código de convite
+      operationId: joinViagem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMembroDTO'
+      responses:
+        '201':
+          description: Membro adicionado à viagem
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembroResponseDTO'
+
+  /viagens/{viagemId}/orcamento:
+    parameters:
+      - name: viagemId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: Obter resumo de orçamento da viagem
+      operationId: getResumoOrcamento
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Resumo do orçamento retornado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrcamentoResponseDTO'
+    put:
+      summary: Atualizar teto do orçamento
+      operationId: updateOrcamento
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrcamentoDTO'
+      responses:
+        '200':
+          description: Orçamento atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrcamentoResponseDTO'
+
+  /destinos/catalogo:
+    get:
+      summary: Buscar destinos no catálogo
+      operationId: searchDestinos
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: categoria
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: notaMinima
+          in: query
+          required: false
+          schema:
+            type: number
+            format: double
+      responses:
+        '200':
+          description: Lista paginada de destinos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DestinoCatalogoDTO'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterDTO:
+      type: object
+      required:
+        - nome
+        - email
+        - senha
+      properties:
+        nome:
+          type: string
+          example: Gabriel Domingues
+        email:
+          type: string
+          format: email
+          example: gabriel@example.com
+        senha:
+          type: string
+          format: password
+          example: secret123
+
+    LoginRequestDTO:
+      type: object
+      required:
+        - email
+        - senha
+      properties:
+        email:
+          type: string
+          format: email
+          example: gabriel@example.com
+        senha:
+          type: string
+          format: password
+          example: secret123
+
+    ForgotPasswordDTO:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: gabriel@example.com
+
+    AuthResponseDTO:
+      type: object
+      properties:
+        token:
+          type: string
+        type:
+          type: string
+          example: Bearer
+        id:
+          type: integer
+          format: int64
+        nome:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: string
+
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nome:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: string
+        dataCriacao:
+          type: string
+          format: date-time
+
+    CreateViagemDTO:
+      type: object
+      required:
+        - nome
+      properties:
+        nome:
+          type: string
+        descricao:
+          type: string
+        dataInicio:
+          type: string
+          format: date
+        dataFim:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [EM_PLANEJAMENTO, CONFIRMADA, CONCLUIDA]
+        orcamentoTotal:
+          type: number
+
+    UpdateViagemDTO:
+      type: object
+      properties:
+        nome:
+          type: string
+        descricao:
+          type: string
+        dataInicio:
+          type: string
+          format: date
+        dataFim:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [EM_PLANEJAMENTO, CONFIRMADA, CONCLUIDA]
+
+    ViagemResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nome:
+          type: string
+        descricao:
+          type: string
+        dataInicio:
+          type: string
+          format: date
+        dataFim:
+          type: string
+          format: date
+        status:
+          type: string
+        codigoConvite:
+          type: string
+        criador:
+          $ref: '#/components/schemas/UserDTO'
+        permissaoUsuarioAutenticado:
+          type: string
+        orcamentoTotal:
+          type: number
+        dataCriacao:
+          type: string
+          format: date-time
+        dataAtualizacao:
+          type: string
+          format: date-time
+
+    AddMembroDTO:
+      type: object
+      required:
+        - codigoConvite
+      properties:
+        codigoConvite:
+          type: string
+        permissao:
+          type: string
+          enum: [CRIADOR, EDITOR, VISUALIZADOR]
+
+    MembroResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        usuario:
+          $ref: '#/components/schemas/UserDTO'
+        permissao:
+          type: string
+        dataEntrada:
+          type: string
+          format: date-time
+
+    UpdateOrcamentoDTO:
+      type: object
+      required:
+        - orcamentoTotal
+      properties:
+        orcamentoTotal:
+          type: number
+
+    OrcamentoResponseDTO:
+      type: object
+      properties:
+        viagemId:
+          type: integer
+          format: int64
+        orcamentoTotal:
+          type: number
+        totalPlanejado:
+          type: number
+        saldoDisponivel:
+          type: number
+        percentualConsumidoTotal:
+          type: number
+
+    DestinoCatalogoDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nome:
+          type: string
+        pais:
+          type: string
+        codigoPaisIso:
+          type: string
+        cidade:
+          type: string
+        estado:
+          type: string
+        descricao:
+          type: string
+        categoria:
+          type: string
+        fotoUrl:
+          type: string
+        avaliacaoMedia:
+          type: number
+        totalAvaliacoes:
+          type: integer
