@@ -15,6 +15,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Spectral Lint
-        uses: stoplightio/spectral-action@v1.4.0
+        uses: stoplightio/spectral-action@latest
         with:
-          file_globs: 'docs/openapi.yaml'
+          file_glob: 'docs/openapi.yaml'
