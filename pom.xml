@@ -103,6 +103,8 @@
 				<configuration>
 					<configLocation>google_checks.xml</configLocation>
 					<failOnViolation>true</failOnViolation>
+					<!-- <logViolationsToConsole>true</logViolationsToConsole>
+					<violationSeverity>warning</violationSeverity> -->
 				</configuration>
 				<executions>
 					<execution>
