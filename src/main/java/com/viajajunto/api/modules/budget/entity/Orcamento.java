@@ -8,8 +8,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "orcamentos")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
