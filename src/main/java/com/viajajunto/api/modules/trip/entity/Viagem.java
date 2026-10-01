@@ -13,8 +13,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "viagens")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
