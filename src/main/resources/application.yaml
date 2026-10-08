@@ -31,7 +31,7 @@ app:
 aws:
   region: ${AWS_REGION:us-east-1}
   dynamodb:
-    endpoint: ${AWS_DYNAMODB_ENDPOINT:http://localhost:8000}
+    endpoint: ${AWS_DYNAMODB_ENDPOINT:http://localhost:4566}
     access-key-id: ${AWS_ACCESS_KEY_ID:fakeAccessKey}
     secret-access-key: ${AWS_SECRET_ACCESS_KEY:fakeSecretKey}
     table-name: Avaliacoes
